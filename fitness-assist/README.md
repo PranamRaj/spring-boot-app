@@ -34,29 +34,39 @@ fitness-assist/
 You need JDK 17+ and Node 18+. Maven is not required: the backend ships a Maven
 wrapper (`backend/mvnw`) that downloads Maven on first use.
 
-For the database, pick either an existing MySQL 8 or the bundled Docker one.
+For the database, use an existing MySQL 8 or the bundled Docker one.
 
-### 1. Configure
+### 1. Local configuration
 
 ```bash
-cp .env.example .env     # then edit DB_PASSWORD, and JWT_SECRET for anything non-local
+cd backend/config
+cp application.yml.example application.yml    # then set your MySQL password
 ```
 
-`.env` is gitignored, so your password stays out of the repository. The run
-scripts below load it before starting the backend.
+Spring Boot loads `backend/config/application.yml` automatically whenever the
+backend is started from the `backend` folder, so `mvnw spring-boot:run`,
+`java -jar`, and your IDE's run button all pick it up with no extra flags. The
+file is gitignored, so your password stays out of the repository.
+
+Without it, the backend falls back to the defaults in
+`src/main/resources/application.yml`, which assume the MySQL password is
+`root` -- that is the usual cause of `Access denied for user 'root'@'localhost'`
+at startup.
 
 ### 2. Database
 
-**Using a MySQL 8 you already have** — point `DB_URL` / `DB_USERNAME` /
-`DB_PASSWORD` in `.env` at it. The `fitness_assist` database is created on
+**An existing MySQL 8** -- put its URL, user and password in
+`backend/config/application.yml`. The `fitness_assist` database is created on
 first connect.
 
-**Using Docker instead** — `docker compose up -d`. The container publishes
-port **3307** by default (3306 is usually taken by a locally installed MySQL),
-so set the port in `.env` to match:
+**Docker instead** -- `docker compose up -d`. The container publishes port
+**3307** by default, because 3306 is usually taken by a locally installed
+MySQL, so use that port in your config:
 
-```
-DB_URL=jdbc:mysql://localhost:3307/fitness_assist?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3307/fitness_assist?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 ```
 
 Override the published port with `MYSQL_PORT` if you prefer another one.
@@ -77,8 +87,8 @@ cd backend && ./mvnw spring-boot:run          # backend
 cd frontend && npm install && npm run dev     # frontend
 ```
 
-The by-hand route does not read `.env`, so export those variables yourself or
-rely on the defaults in `application.yml`.
+Both routes read the same `backend/config/application.yml`. Environment
+variables still override it if you prefer that for CI or deployment.
 
 - Swagger UI: http://localhost:8080/swagger-ui.html (use **Authorize** and paste the token from `/api/auth/login`)
 - Tables are created by Hibernate (`ddl-auto: update`), and the exercise library (about 40 exercises) is seeded automatically.

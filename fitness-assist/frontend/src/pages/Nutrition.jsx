@@ -1,26 +1,55 @@
 import { useEffect, useState } from 'react';
 import api, { errMsg, todayStr } from '../api.js';
-import { ErrorBox, Field, ProgressBar, label } from '../components/ui.jsx';
+import { useReveal, useCountUp } from '../lib/motion.js';
+import {
+  Card,
+  Chip,
+  Empty,
+  ErrorBox,
+  Field,
+  MacroMeter,
+  PageHeader,
+  Panel,
+  Ring,
+  Skeleton,
+  label,
+} from '../components/ui.jsx';
+import { IconFlame, IconPlus, IconTrash } from '../components/icons.jsx';
 
 const MEALS = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK'];
+const MACROS = [
+  ['Protein', 'proteinG'],
+  ['Carbs', 'carbsG'],
+  ['Fat', 'fatG'],
+];
 const blank = { mealType: 'BREAKFAST', foodName: '', calories: '', proteinG: '', carbsG: '', fatG: '' };
 
 export default function Nutrition() {
   const [date, setDate] = useState(todayStr());
   const [daily, setDaily] = useState(null);
   const [form, setForm] = useState(blank);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const load = () =>
-    api.get('/nutrition/daily', { params: { date } }).then((r) => setDaily(r.data)).catch((e) => setError(errMsg(e)));
+    api
+      .get('/nutrition/daily', { params: { date } })
+      .then((r) => setDaily(r.data))
+      .catch((e) => setError(errMsg(e)));
 
-  useEffect(() => { load(); }, [date]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
+  const scope = useReveal([daily?.entries.length, date]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const add = async (e) => {
     e.preventDefault();
     setError('');
+    setBusy(true);
     try {
       await api.post('/nutrition/food-logs', {
         date,
@@ -35,6 +64,8 @@ export default function Nutrition() {
       load();
     } catch (err) {
       setError(errMsg(err));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -48,92 +79,184 @@ export default function Nutrition() {
   };
 
   const remaining = daily?.remaining.calories ?? 0;
+  const over = remaining < 0;
+  const isToday = date === todayStr();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Nutrition</h1>
-        <input type="date" className="input w-auto" value={date} max={todayStr()} onChange={(e) => setDate(e.target.value)} />
-      </div>
+    <div ref={scope} className="space-y-6 sm:space-y-8">
+      <PageHeader
+        title="Nutrition"
+        subtitle="Targets come from your profile. Log what you actually ate — estimates are fine."
+      >
+        <div className="flex items-center gap-2">
+          {!isToday && (
+            <button className="btn-ghost btn-sm" onClick={() => setDate(todayStr())}>
+              Today
+            </button>
+          )}
+          <input
+            type="date"
+            className="input w-auto"
+            value={date}
+            max={todayStr()}
+            onChange={(e) => setDate(e.target.value)}
+            aria-label="Date"
+          />
+        </div>
+      </PageHeader>
+
       <ErrorBox message={error} />
 
-      {daily && (
-        <div className="card space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <span className="text-4xl font-bold">{Math.abs(remaining)}</span>
-              <span className="ml-2 text-slate-500">kcal {remaining >= 0 ? 'remaining' : 'over target'}</span>
-            </div>
-            <div className="text-sm text-slate-500">{daily.consumed.calories} eaten of {daily.target.calories} kcal</div>
-          </div>
-          <ProgressBar value={daily.consumed.calories} max={daily.target.calories} over={daily.overCalorieTarget} />
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[['Protein', 'proteinG'], ['Carbs', 'carbsG'], ['Fat', 'fatG']].map(([name, key]) => (
-              <div key={key}>
-                <div className="mb-1 flex justify-between text-sm">
-                  <span className="font-medium">{name}</span>
-                  <span className="text-slate-500">{daily.consumed[key]} / {daily.target[key]} g</span>
+      {/* Day summary */}
+      {!daily ? (
+        <Skeleton className="h-56 rounded-card" />
+      ) : (
+        <Card tilt reveal="">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+            <div className="flex items-center gap-6">
+              <Ring value={daily.consumed.calories} max={daily.target.calories} size={144}>
+                <RemainingFigure remaining={remaining} over={over} />
+              </Ring>
+              <div className="min-w-0">
+                <div className="eyebrow">Eaten</div>
+                {/* Target on its own line, so "kcal" never wraps away from it. */}
+                <div className="tnum mt-1.5 font-mono text-xl font-bold leading-none">
+                  {daily.consumed.calories}
                 </div>
-                <ProgressBar value={daily.consumed[key]} max={daily.target[key]} />
-                <div className="mt-1 text-xs text-slate-400">{daily.remaining[key]} g left</div>
+                <div className="tnum mt-1 font-mono text-xs text-ink-500">
+                  of {daily.target.calories} kcal
+                </div>
+                {over && (
+                  <Chip tone="warn" className="mt-2.5">
+                    Over target
+                  </Chip>
+                )}
               </div>
-            ))}
+            </div>
+
+            <div className="grid flex-1 gap-5 sm:grid-cols-3 lg:border-l lg:border-white/[0.07] lg:pl-8">
+              {MACROS.map(([name, key]) => (
+                <MacroMeter
+                  key={key}
+                  name={name}
+                  value={daily.consumed[key]}
+                  max={daily.target[key]}
+                  left={daily.remaining[key]}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </Card>
       )}
 
-      <form onSubmit={add} className="card space-y-3">
-        <h2 className="font-semibold">Add food</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          <Field label="Meal">
-            <select className="input" value={form.mealType} onChange={set('mealType')}>
-              {MEALS.map((m) => <option key={m} value={m}>{label(m)}</option>)}
-            </select>
-          </Field>
-          <div className="lg:col-span-2">
-            <Field label="Food"><input className="input" required value={form.foodName} onChange={set('foodName')} placeholder="2 eggs and toast" /></Field>
+      {/* Add food */}
+      <Panel reveal="" title="Add food" note="Only calories are required.">
+        <form onSubmit={add} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Meal">
+              <select className="input" value={form.mealType} onChange={set('mealType')}>
+                {MEALS.map((m) => (
+                  <option key={m} value={m}>{label(m)}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Food" className="sm:col-span-1 lg:col-span-2">
+              <input
+                className="input"
+                required
+                value={form.foodName}
+                onChange={set('foodName')}
+                placeholder="2 eggs and toast"
+              />
+            </Field>
+            <Field label="Calories">
+              <input className="input tnum" type="number" min="0" required value={form.calories} onChange={set('calories')} />
+            </Field>
           </div>
-          <Field label="Calories"><input className="input" type="number" min="0" required value={form.calories} onChange={set('calories')} /></Field>
-          <Field label="Protein (g)"><input className="input" type="number" min="0" step="0.1" value={form.proteinG} onChange={set('proteinG')} /></Field>
-          <Field label="Carbs (g)"><input className="input" type="number" min="0" step="0.1" value={form.carbsG} onChange={set('carbsG')} /></Field>
-        </div>
-        <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          <Field label="Fat (g)"><input className="input" type="number" min="0" step="0.1" value={form.fatG} onChange={set('fatG')} /></Field>
-          <button className="btn">Add</button>
-        </div>
-      </form>
 
-      {daily && (
-        <div className="space-y-4">
+          <div className="grid gap-4 border-t border-white/[0.06] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Protein (g)">
+              <input className="input tnum" type="number" min="0" step="0.1" value={form.proteinG} onChange={set('proteinG')} />
+            </Field>
+            <Field label="Carbs (g)">
+              <input className="input tnum" type="number" min="0" step="0.1" value={form.carbsG} onChange={set('carbsG')} />
+            </Field>
+            <Field label="Fat (g)">
+              <input className="input tnum" type="number" min="0" step="0.1" value={form.fatG} onChange={set('fatG')} />
+            </Field>
+            <div className="flex items-end">
+              <button className="btn w-full" disabled={busy}>
+                <IconPlus size={16} />
+                {busy ? 'Adding…' : 'Add to day'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </Panel>
+
+      {/* Meals */}
+      {daily && daily.entries.length === 0 ? (
+        <div data-reveal>
+          <Empty icon={IconFlame} title="Nothing logged for this day">
+            Add your first entry above. Rough numbers beat no numbers.
+          </Empty>
+        </div>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-2">
           {MEALS.map((meal) => {
-            const entries = daily.entries.filter((e) => e.mealType === meal);
-            if (entries.length === 0) return null;
+            const entries = daily?.entries.filter((e) => e.mealType === meal) ?? [];
+            if (!entries.length) return null;
+            const kcal = entries.reduce((a, e) => a + e.calories, 0);
             return (
-              <div key={meal} className="card">
-                <div className="mb-2 flex justify-between">
-                  <h3 className="font-semibold">{label(meal)}</h3>
-                  <span className="text-sm text-slate-500">{entries.reduce((a, e) => a + e.calories, 0)} kcal</span>
+              <Card key={meal} tilt reveal="scale">
+                <div className="mb-2 flex items-baseline justify-between gap-3 border-b border-white/[0.07] pb-3">
+                  <h3 className="text-[1.0625rem] font-semibold tracking-tight">{label(meal)}</h3>
+                  <span className="tnum font-mono text-sm text-signal-300">{kcal} kcal</span>
                 </div>
-                <ul className="divide-y divide-slate-100 text-sm">
+                <ul>
                   {entries.map((e) => (
-                    <li key={e.id} className="flex items-center justify-between gap-3 py-2">
-                      <div>
-                        <div>{e.foodName}</div>
-                        <div className="text-xs text-slate-500">P {e.proteinG} · C {e.carbsG} · F {e.fatG}</div>
+                    <li key={e.id} className="row group/row">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-ink-100">{e.foodName}</div>
+                        <div className="tnum mt-0.5 text-xs text-ink-500">
+                          P {e.proteinG} · C {e.carbsG} · F {e.fatG}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span>{e.calories} kcal</span>
-                        <button className="btn-danger" onClick={() => remove(e.id)}>Delete</button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="tnum font-mono text-sm text-ink-200">{e.calories}</span>
+                        <button
+                          className="btn-danger transition-opacity sm:opacity-50 sm:group-hover/row:opacity-100 sm:focus-visible:opacity-100"
+                          onClick={() => remove(e.id)}
+                          aria-label={`Delete ${e.foodName}`}
+                        >
+                          <IconTrash size={15} />
+                        </button>
                       </div>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Card>
             );
           })}
-          {daily.entries.length === 0 && <p className="text-sm text-slate-500">Nothing logged for this day.</p>}
         </div>
       )}
     </div>
+  );
+}
+
+function RemainingFigure({ remaining, over }) {
+  const ref = useCountUp(Math.abs(remaining));
+  return (
+    <>
+      <span
+        ref={ref}
+        className={`tnum block font-mono text-[2rem] font-bold leading-none ${over ? 'text-rose-300' : 'text-ink-50'}`}
+      >
+        0
+      </span>
+      <span className="mt-1.5 block text-[0.6875rem] uppercase tracking-[0.1em] text-ink-400">
+        kcal {over ? 'over' : 'left'}
+      </span>
+    </>
   );
 }

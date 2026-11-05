@@ -1,13 +1,63 @@
 import { useEffect, useState } from 'react';
 import {
-  Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
 import api, { errMsg, todayStr } from '../api.js';
-import { ErrorBox, Field } from '../components/ui.jsx';
+import { useReveal, refreshMotion, reducedMotion } from '../lib/motion.js';
+import { CHART, ChartTooltip, activeDot, axis, cursor, grid } from '../lib/chartTheme.jsx';
+import {
+  Card,
+  Chip,
+  Empty,
+  ErrorBox,
+  Field,
+  PageHeader,
+  Panel,
+  Stat,
+  TableWrap,
+} from '../components/ui.jsx';
+import { IconChart, IconScale, IconTrash } from '../components/icons.jsx';
 
 const emptyMetric = { date: todayStr(), weightKg: '', waistCm: '', chestCm: '', hipsCm: '', armCm: '', thighCm: '' };
-
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v));
+
+/** Recharts animates by default and ignores the OS motion preference. */
+const anim = () => ({ isAnimationActive: !reducedMotion(), animationDuration: 900 });
+
+/** Volume runs into five figures; axis ticks read better as 22k than 22625. */
+const kilos = (n) => (n >= 1000 ? `${Math.round(n / 100) / 10}k` : n);
+
+const METRIC_FIELDS = [
+  ['weightKg', 'Weight', 'kg'],
+  ['waistCm', 'Waist', 'cm'],
+  ['chestCm', 'Chest', 'cm'],
+  ['hipsCm', 'Hips', 'cm'],
+  ['armCm', 'Arm', 'cm'],
+  ['thighCm', 'Thigh', 'cm'],
+];
+
+/** Fixed-height chart frame, so the panels line up and nothing jumps on load. */
+function ChartFrame({ children, empty }) {
+  return (
+    <div className="h-64 sm:h-72">
+      {empty ? (
+        <div className="flex h-full items-center justify-center text-center text-sm text-ink-500">{empty}</div>
+      ) : (
+        <ResponsiveContainer>{children}</ResponsiveContainer>
+      )}
+    </div>
+  );
+}
 
 export default function Progress() {
   const [days, setDays] = useState(90);
@@ -24,8 +74,10 @@ export default function Progress() {
   const loadAll = () => {
     api.get('/progress/weight', { params: { days } }).then((r) => setWeight(r.data)).catch((e) => setError(errMsg(e)));
     api.get('/progress/volume', { params: { weeks: 12 } }).then((r) => setVolume(r.data)).catch((e) => setError(errMsg(e)));
-    api.get('/metrics', { params: { from: new Date(Date.now() - days * 86400000).toLocaleDateString('en-CA') } })
-      .then((r) => setMetrics(r.data)).catch((e) => setError(errMsg(e)));
+    api
+      .get('/metrics', { params: { from: new Date(Date.now() - days * 86400000).toLocaleDateString('en-CA') } })
+      .then((r) => setMetrics(r.data))
+      .catch((e) => setError(errMsg(e)));
     api.get('/summaries/weekly').then((r) => setSummaries(r.data)).catch((e) => setError(errMsg(e)));
   };
 
@@ -42,6 +94,14 @@ export default function Progress() {
     if (!exerciseId) return;
     api.get(`/progress/strength/${exerciseId}`).then((r) => setStrength(r.data)).catch((e) => setError(errMsg(e)));
   }, [exerciseId]);
+
+  const scope = useReveal([metrics.length, summaries.length]);
+
+  // Charts render after their data lands and change the page height.
+  useEffect(() => {
+    const t = setTimeout(refreshMotion, 350);
+    return () => clearTimeout(t);
+  }, [weight, volume, strength]);
 
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -83,147 +143,279 @@ export default function Progress() {
     }
   };
 
+  const change = weight?.changeKg;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Progress</h1>
-        <select className="input w-auto" value={days} onChange={(e) => setDays(Number(e.target.value))}>
+    <div ref={scope} className="space-y-6 sm:space-y-8">
+      <PageHeader title="Progress" subtitle="Body weight, strength per exercise and weekly training volume.">
+        <select
+          className="input w-auto"
+          value={days}
+          onChange={(e) => setDays(Number(e.target.value))}
+          aria-label="Time range"
+        >
           <option value={30}>Last 30 days</option>
           <option value={90}>Last 3 months</option>
           <option value={180}>Last 6 months</option>
           <option value={365}>Last year</option>
         </select>
-      </div>
+      </PageHeader>
+
       <ErrorBox message={error} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card">
-          <div className="mb-2 flex items-baseline justify-between">
-            <h2 className="font-semibold">Body weight</h2>
-            {weight?.changeKg != null && (
-              <span className="text-sm text-slate-500">
-                {weight.changeKg > 0 ? '+' : ''}{weight.changeKg} kg over this period
-              </span>
-            )}
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <LineChart data={weight?.points || []}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis domain={['auto', 'auto']} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="weightKg" name="Weight (kg)" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="font-semibold">Strength</h2>
-            <select className="input w-auto max-w-[200px]" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)}>
-              {exercises.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </div>
-          <div className="h-64">
-            {strength?.points.length ? (
-              <ResponsiveContainer>
-                <LineChart data={strength.points}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="bestEstimated1Rm" name="Est. 1RM (kg)" stroke="#059669" strokeWidth={2} />
-                  <Line type="monotone" dataKey="maxWeightKg" name="Top weight (kg)" stroke="#6366f1" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {/* Body weight */}
+        <Panel
+          reveal="left"
+          title="Body weight"
+          action={
+            change != null && (
+              <Chip tone={change > 0 ? 'warn' : 'signal'}>
+                {change > 0 ? '+' : ''}
+                {change} kg this period
+              </Chip>
+            )
+          }
+        >
+          <ChartFrame empty={!weight?.points?.length && 'No weigh-ins in this period yet.'}>
+            <AreaChart data={weight?.points || []} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART.signal} stopOpacity={0.28} />
+                  <stop offset="100%" stopColor={CHART.signal} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...grid} />
+              <XAxis dataKey="date" {...axis} minTickGap={28} />
+              <YAxis domain={['auto', 'auto']} {...axis} width={52} />
+              <Tooltip content={<ChartTooltip unit=" kg" />} cursor={{ stroke: CHART.grid }} />
+              <Area
+                type="monotone"
+                dataKey="weightKg"
+                name="Weight"
+                stroke={CHART.signal}
+                strokeWidth={2}
+                fill="url(#weightFill)"
+                dot={false}
+                activeDot={{ ...activeDot, fill: CHART.signal }}
+                {...anim()}
+              />
+            </AreaChart>
+          </ChartFrame>
+          {/* Mirrors the strength card's legend row, and keeps the two level. */}
+          <div className="tnum mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-white/[0.06] pt-3 text-xs text-ink-400">
+            {weight?.points?.length ? (
+              <>
+                <span>
+                  First <span className="font-mono text-ink-200">{weight.points[0].weightKg} kg</span>
+                </span>
+                <span>
+                  Latest{' '}
+                  <span className="font-mono text-ink-200">
+                    {weight.points[weight.points.length - 1].weightKg} kg
+                  </span>
+                </span>
+                <span>
+                  {weight.points.length} {weight.points.length === 1 ? 'weigh-in' : 'weigh-ins'}
+                </span>
+              </>
             ) : (
-              <p className="pt-8 text-center text-sm text-slate-500">No logged sets for this exercise yet.</p>
+              <span>Log a weight below to start this chart.</span>
             )}
           </div>
-        </div>
+        </Panel>
 
-        <div className="card lg:col-span-2">
-          <h2 className="mb-2 font-semibold">Weekly training volume (12 weeks)</h2>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <BarChart data={volume}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="weekStart" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="volume" name="Volume (kg)" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Strength */}
+        <Panel
+          reveal="right"
+          title="Strength"
+          action={
+            <select
+              className="input w-auto max-w-[12rem]"
+              value={exerciseId}
+              onChange={(e) => setExerciseId(e.target.value)}
+              aria-label="Exercise"
+            >
+              {exercises.map((x) => (
+                <option key={x.id} value={x.id}>{x.name}</option>
+              ))}
+            </select>
+          }
+        >
+          <ChartFrame empty={!strength?.points?.length && 'No sets logged for this exercise yet.'}>
+            <LineChart data={strength?.points || []} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid {...grid} />
+              <XAxis dataKey="date" {...axis} minTickGap={28} />
+              <YAxis {...axis} width={52} />
+              <Tooltip content={<ChartTooltip unit=" kg" />} cursor={{ stroke: CHART.grid }} />
+              <Line
+                type="monotone"
+                dataKey="bestEstimated1Rm"
+                name="Est. 1RM"
+                stroke={CHART.signal}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ ...activeDot, fill: CHART.signal }}
+                {...anim()}
+              />
+              <Line
+                type="monotone"
+                dataKey="maxWeightKg"
+                name="Top weight"
+                stroke={CHART.cool}
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={{ ...activeDot, fill: CHART.cool }}
+                {...anim()}
+              />
+            </LineChart>
+          </ChartFrame>
+          <div className="mt-3 flex flex-wrap gap-4 border-t border-white/[0.06] pt-3 text-xs text-ink-400">
+            <span className="flex items-center gap-1.5">
+              <span className="h-0.5 w-4 rounded-full" style={{ background: CHART.signal }} />
+              Estimated 1RM
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0.5 w-4 rounded-full" style={{ background: CHART.cool }} />
+              Top weight
+            </span>
           </div>
-        </div>
+        </Panel>
+
+        {/* Volume */}
+        <Panel reveal="" title="Weekly training volume" note="Last 12 weeks" className="xl:col-span-2">
+          <ChartFrame empty={!volume.length && 'No finished workouts yet.'}>
+            <BarChart data={volume} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART.signalLight} />
+                  <stop offset="100%" stopColor={CHART.signal} stopOpacity={0.45} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid {...grid} />
+              <XAxis dataKey="weekStart" {...axis} minTickGap={16} />
+              <YAxis {...axis} width={56} tickFormatter={kilos} />
+              <Tooltip content={<ChartTooltip unit=" kg" />} cursor={cursor} />
+              <Bar
+                dataKey="volume"
+                name="Volume"
+                fill="url(#volFill)"
+                radius={[5, 5, 0, 0]}
+                maxBarSize={56}
+                {...anim()}
+              />
+            </BarChart>
+          </ChartFrame>
+        </Panel>
       </div>
 
-      <form onSubmit={logMetric} className="card space-y-3">
-        <h2 className="font-semibold">Log body metrics</h2>
-        <p className="text-xs text-slate-500">One entry per day; logging the same date again updates it.</p>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-7">
-          <Field label="Date"><input className="input" type="date" max={todayStr()} value={form.date} onChange={setF('date')} /></Field>
-          <Field label="Weight (kg)"><input className="input" type="number" step="0.1" min="20" required value={form.weightKg} onChange={setF('weightKg')} /></Field>
-          <Field label="Waist (cm)"><input className="input" type="number" step="0.1" value={form.waistCm} onChange={setF('waistCm')} /></Field>
-          <Field label="Chest (cm)"><input className="input" type="number" step="0.1" value={form.chestCm} onChange={setF('chestCm')} /></Field>
-          <Field label="Hips (cm)"><input className="input" type="number" step="0.1" value={form.hipsCm} onChange={setF('hipsCm')} /></Field>
-          <Field label="Arm (cm)"><input className="input" type="number" step="0.1" value={form.armCm} onChange={setF('armCm')} /></Field>
-          <Field label="Thigh (cm)"><input className="input" type="number" step="0.1" value={form.thighCm} onChange={setF('thighCm')} /></Field>
-        </div>
-        <button className="btn">Save entry</button>
-      </form>
-
-      <div className="card overflow-x-auto">
-        <h2 className="mb-2 font-semibold">Metric history</h2>
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-slate-400">
-            <tr><th className="py-1">Date</th><th>Weight</th><th>Waist</th><th>Chest</th><th>Hips</th><th>Arm</th><th>Thigh</th><th /></tr>
-          </thead>
-          <tbody>
-            {[...metrics].reverse().map((m) => (
-              <tr key={m.id} className="border-t border-slate-100">
-                <td className="py-1.5">{m.date}</td>
-                <td>{m.weightKg}</td>
-                <td>{m.waistCm ?? '-'}</td>
-                <td>{m.chestCm ?? '-'}</td>
-                <td>{m.hipsCm ?? '-'}</td>
-                <td>{m.armCm ?? '-'}</td>
-                <td>{m.thighCm ?? '-'}</td>
-                <td className="text-right"><button className="btn-danger" onClick={() => removeMetric(m.id)}>Delete</button></td>
-              </tr>
+      {/* Log metrics */}
+      <Panel reveal="" title="Log body metrics" note="One entry per day — logging the same date again updates it.">
+        <form onSubmit={logMetric} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+            <Field label="Date">
+              <input className="input" type="date" max={todayStr()} value={form.date} onChange={setF('date')} />
+            </Field>
+            {METRIC_FIELDS.map(([key, name, unit]) => (
+              <Field key={key} label={`${name} (${unit})`}>
+                <input
+                  className="input tnum"
+                  type="number"
+                  step="0.1"
+                  min={key === 'weightKg' ? 20 : undefined}
+                  required={key === 'weightKg'}
+                  value={form[key]}
+                  onChange={setF(key)}
+                />
+              </Field>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+          <button className="btn">Save entry</button>
+        </form>
+      </Panel>
 
-      <div className="card">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Weekly consistency</h2>
-          <button className="btn-ghost" onClick={generate}>Update this week's summary</button>
-        </div>
-        {summaries.length === 0 ? (
-          <p className="text-sm text-slate-500">No summaries yet.</p>
+      {/* Metric history */}
+      <Panel reveal="" title="Metric history" note={metrics.length ? `${metrics.length} entries` : undefined}>
+        {metrics.length === 0 ? (
+          <Empty icon={IconScale} title="No measurements in this period">
+            Log one above to start the weight chart.
+          </Empty>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <TableWrap>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="th">Date</th>
+                  {METRIC_FIELDS.map(([key, name]) => (
+                    <th key={key} className="th">{name}</th>
+                  ))}
+                  <th className="th" />
+                </tr>
+              </thead>
+              <tbody>
+                {[...metrics].reverse().map((m) => (
+                  <tr key={m.id} className="transition-colors hover:bg-white/[0.02]">
+                    <td className="td font-mono text-xs text-ink-300">{m.date}</td>
+                    {METRIC_FIELDS.map(([key]) => (
+                      <td key={key} className="td font-mono">
+                        {m[key] ?? <span className="text-ink-600">—</span>}
+                      </td>
+                    ))}
+                    <td className="td text-right">
+                      <button className="btn-danger" onClick={() => removeMetric(m.id)} aria-label={`Delete entry for ${m.date}`}>
+                        <IconTrash size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableWrap>
+        )}
+      </Panel>
+
+      {/* Weekly summaries */}
+      <Panel
+        reveal=""
+        title="Weekly consistency"
+        action={
+          <button className="btn-ghost btn-sm" onClick={generate}>
+            Update this week
+          </button>
+        }
+      >
+        {summaries.length === 0 ? (
+          <Empty icon={IconChart} title="No summaries yet">
+            Generate this week&apos;s now, or wait for Monday&apos;s scheduled run.
+          </Empty>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {summaries.map((s) => (
-              <div key={s.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-medium">{s.weekStart} to {s.weekEnd}</span>
-                  <span className="text-lg font-bold text-brand-700">{s.consistencyScore}</span>
+              <Card key={s.id} tilt className="bg-ink-800/40 p-4 sm:p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="tnum font-mono text-xs text-ink-400">
+                    {s.weekStart} → {s.weekEnd}
+                  </span>
+                  <span className="tnum font-mono text-xl font-bold text-signal-300">{s.consistencyScore}</span>
                 </div>
-                <div className="mt-1 text-slate-600">
-                  {s.workoutsCompleted} workouts · {s.totalVolume} kg volume<br />
-                  {s.daysFoodLogged}/7 days logged · avg {s.avgDailyCalories} kcal
-                  {s.weightChangeKg != null && <><br />Weight change {s.weightChangeKg > 0 ? '+' : ''}{s.weightChangeKg} kg</>}
+                <div className="mt-3 grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-3">
+                  <Stat title="Workouts" value={s.workoutsCompleted} />
+                  <Stat title="Volume" value={s.totalVolume} unit="kg" />
+                  <Stat title="Days logged" value={s.daysFoodLogged} unit="/ 7" />
+                  <Stat title="Avg intake" value={s.avgDailyCalories} unit="kcal" />
                 </div>
-              </div>
+                {s.weightChangeKg != null && (
+                  <p className="tnum mt-3 text-xs text-ink-400">
+                    Weight change {s.weightChangeKg > 0 ? '+' : ''}
+                    {s.weightChangeKg} kg
+                  </p>
+                )}
+              </Card>
             ))}
           </div>
         )}
-      </div>
+      </Panel>
     </div>
   );
 }

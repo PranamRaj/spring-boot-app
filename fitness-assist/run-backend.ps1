@@ -1,18 +1,13 @@
 # Starts the Spring Boot API on http://localhost:8080
-# Reads configuration from .env (copy .env.example if you don't have one yet).
+#
+# Local database credentials come from backend/config/application.yml, which
+# Spring Boot loads automatically -- copy config/application.yml.example to
+# config/application.yml first if you haven't.
 $ErrorActionPreference = 'Stop'
-Set-Location $PSScriptRoot
+Set-Location (Join-Path $PSScriptRoot 'backend')
 
-$envFile = Join-Path $PSScriptRoot '.env'
-if (Test-Path $envFile) {
-    foreach ($line in Get-Content $envFile) {
-        if ($line -match '^\s*#' -or $line -notmatch '=') { continue }
-        $name, $value = $line -split '=', 2
-        Set-Item -Path "Env:\$($name.Trim())" -Value $value.Trim()
-    }
-} else {
-    Write-Warning "No .env found; falling back to the defaults in application.yml."
+if (-not (Test-Path 'config\application.yml')) {
+    Write-Warning "backend\config\application.yml is missing; falling back to the defaults in src\main\resources\application.yml (which will fail if your MySQL password isn't 'root'). Copy config\application.yml.example to get started."
 }
 
-Set-Location (Join-Path $PSScriptRoot 'backend')
 & .\mvnw.cmd spring-boot:run

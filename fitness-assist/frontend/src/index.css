@@ -2,23 +2,250 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    color-scheme: dark;
+    --rail: 15rem;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ink-950 font-sans text-ink-100 antialiased;
+    /* Two very wide, very dim washes. Fixed, so content scrolls over them. */
+    background-image:
+      radial-gradient(110rem 48rem at 18% -14%, rgba(195, 245, 60, 0.055), transparent 60%),
+      radial-gradient(80rem 40rem at 96% 4%, rgba(76, 200, 255, 0.035), transparent 62%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers line up in tables and readouts. */
+  table,
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-ink-50;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    @apply bg-signal-400/25 text-ink-50;
+  }
+
+  /* Slim scrollbar that matches the surfaces. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #22262f transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full border-[3px] border-solid border-transparent bg-ink-700 bg-clip-content;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-600 bg-clip-content;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-signal-400/70 ring-offset-2 ring-offset-ink-950;
+  }
+
+  /* Native pickers on a dark surface. */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.75);
+    cursor: pointer;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
 @layer components {
+  /* ---------- Surfaces ---------- */
+
+  /* The one card. A hairline edge plus a top highlight reads as a lit panel
+     rather than a drop-shadowed box. */
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+    @apply relative rounded-card border border-white/[0.07] bg-ink-900/70 p-5 shadow-lift backdrop-blur-xl sm:p-6;
   }
-  .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+  .card::before {
+    content: '';
+    @apply pointer-events-none absolute inset-x-5 top-0 h-px rounded-full bg-gradient-to-r from-transparent via-white/[0.14] to-transparent;
   }
+
+  /* Opt-in hover for cards that are actually interactive. */
+  .card-hover {
+    @apply transition-[transform,border-color,box-shadow] duration-500 ease-out will-change-transform hover:-translate-y-1 hover:border-white/[0.14];
+  }
+
+  .card-pad-none {
+    @apply p-0;
+  }
+
+  .hairline {
+    @apply border-white/[0.07];
+  }
+
+  /* ---------- Type ---------- */
+
+  .eyebrow {
+    @apply text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-ink-400;
+  }
+  .readout {
+    @apply font-mono text-readout font-bold text-ink-50;
+  }
+  .unit {
+    @apply text-sm font-normal tracking-normal text-ink-400;
+  }
+
+  /* ---------- Form controls ---------- */
+
   .label {
-    @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500;
+    @apply mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-ink-400;
   }
+
+  .input {
+    @apply w-full rounded-xl border border-white/[0.09] bg-ink-800/60 px-3.5 py-2.5 text-sm text-ink-50
+           transition duration-200 placeholder:text-ink-500
+           hover:border-white/[0.16] focus:border-signal-400/60 focus:bg-ink-800 focus:outline-none
+           focus:ring-4 focus:ring-signal-400/10 disabled:opacity-50;
+  }
+
+  select.input {
+    @apply cursor-pointer appearance-none bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23646b7d' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: right 0.9rem center;
+  }
+  select.input option {
+    @apply bg-ink-800 text-ink-50;
+  }
+
+  /* ---------- Buttons ---------- */
+
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50;
+    @apply relative inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded-xl
+           bg-signal-400 px-4 py-2.5 text-sm font-semibold tracking-tight text-ink-950
+           transition duration-200 ease-out
+           hover:bg-signal-300 hover:shadow-glow active:scale-[0.98]
+           disabled:pointer-events-none;
   }
+  /* Faded lime on a dark surface turns olive and reads as a state, not as
+     "unavailable" — so a disabled button drops to a neutral surface instead. */
+  .btn:disabled {
+    @apply bg-ink-700 text-ink-400 shadow-none;
+  }
+  /* Sheen that sweeps once on hover. */
+  .btn::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out;
+  }
+  .btn:hover::after {
+    @apply translate-x-full;
+  }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100;
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl border border-white/[0.11]
+           bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-ink-200 transition duration-200
+           hover:border-white/20 hover:bg-white/[0.07] hover:text-ink-50 active:scale-[0.98]
+           disabled:pointer-events-none disabled:opacity-40;
   }
+
   .btn-danger {
-    @apply text-sm font-medium text-red-600 hover:text-red-700;
+    @apply inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-ink-400
+           transition duration-150 hover:bg-rose-500/10 hover:text-rose-300;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .link {
+    @apply font-medium text-signal-400 underline-offset-4 transition-colors hover:text-signal-300 hover:underline;
+  }
+
+  /* ---------- Chips ---------- */
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.09] bg-white/[0.04]
+           px-2.5 py-1 text-[0.6875rem] font-medium text-ink-300;
+  }
+  .chip-signal {
+    @apply border-signal-400/25 bg-signal-400/10 text-signal-300;
+  }
+  .chip-warn {
+    @apply border-amber-400/25 bg-amber-400/10 text-amber-300;
+  }
+
+  /* ---------- Data lists ---------- */
+
+  .row {
+    @apply flex items-center justify-between gap-4 border-t border-white/[0.06] py-3 text-sm
+           transition-colors duration-150 first:border-t-0 hover:bg-white/[0.02];
+  }
+
+  .th {
+    @apply whitespace-nowrap px-3 py-2 text-left text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-ink-400;
+  }
+  .td {
+    @apply whitespace-nowrap border-t border-white/[0.06] px-3 py-2.5 text-sm text-ink-200;
+  }
+}
+
+@layer utilities {
+  /* Fades the edge of a horizontally scrolling region instead of a hard cut. */
+  .mask-r {
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* GSAP sets the final state; this is the pre-paint state so nothing flashes.
+     Cleared by .is-ready when motion is reduced or JS has not run. */
+  [data-reveal] {
+    opacity: 0;
+  }
+  .is-ready [data-reveal] {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

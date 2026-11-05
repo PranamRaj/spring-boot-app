@@ -5,3 +5,6 @@ dist/
 .vscode/
 *.log
 .env
+
+# Local developer config (holds the real DB password); the .example is tracked.
+fitness-assist/backend/config/application.yml

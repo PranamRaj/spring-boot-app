@@ -1,0 +1,15 @@
+# Local developer overrides. Spring Boot picks this file up automatically when
+# the backend is started from the `backend` folder -- no profile or env var
+# needed, so `mvnw spring-boot:run`, `java -jar`, and your IDE's run button all
+# work the same way.
+#
+# Copy this file to application.yml and fill in your own values.
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/fitness_assist?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: change-me
+
+app:
+  jwt:
+    secret: local-dev-secret-key-change-me-at-least-32-chars
