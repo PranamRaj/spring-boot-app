@@ -1,0 +1,105 @@
+{
+  "info": {
+    "name": "Fitness Assist API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "sessionId", "value": "1" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Register",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "if (pm.response.code === 201) pm.collectionVariables.set('token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/register",
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Asha Rao\",\n  \"email\": \"asha@example.com\",\n  \"password\": \"password123\",\n  \"sex\": \"FEMALE\",\n  \"age\": 27,\n  \"heightCm\": 165,\n  \"weightKg\": 62,\n  \"activityLevel\": \"MODERATE\",\n  \"goal\": \"MUSCLE_GAIN\"\n}" }
+      }
+    },
+    {
+      "name": "Login",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('200 OK', () => pm.response.to.have.status(200));",
+        "pm.collectionVariables.set('token', pm.response.json().token);"
+      ] } }],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"asha@example.com\",\n  \"password\": \"password123\"\n}" }
+      }
+    },
+    { "name": "Get profile", "request": { "method": "GET", "url": "{{baseUrl}}/api/profile" } },
+    {
+      "name": "List exercises (chest, barbell)",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/exercises?muscleGroup=CHEST&equipment=BARBELL", "host": ["{{baseUrl}}"], "path": ["api", "exercises"], "query": [{ "key": "muscleGroup", "value": "CHEST" }, { "key": "equipment", "value": "BARBELL" }] } }
+    },
+    {
+      "name": "Create routine",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/routines",
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Push day\",\n  \"notes\": \"Heavy chest and shoulders\",\n  \"exercises\": [\n    { \"exerciseId\": 1, \"targetSets\": 4, \"targetReps\": 8 },\n    { \"exerciseId\": 12, \"targetSets\": 3, \"targetReps\": 10 }\n  ]\n}" }
+      }
+    },
+    {
+      "name": "Start workout session",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "if (pm.response.code === 201) pm.collectionVariables.set('sessionId', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/workouts/sessions",
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Push day\"\n}" }
+      }
+    },
+    {
+      "name": "Log a set",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/workouts/sessions/{{sessionId}}/sets",
+        "body": { "mode": "raw", "raw": "{\n  \"exerciseId\": 1,\n  \"reps\": 8,\n  \"weightKg\": 40\n}" }
+      }
+    },
+    { "name": "Finish workout", "request": { "method": "POST", "url": "{{baseUrl}}/api/workouts/sessions/{{sessionId}}/finish" } },
+    { "name": "List workouts", "request": { "method": "GET", "url": "{{baseUrl}}/api/workouts/sessions" } },
+    {
+      "name": "Add food log",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/nutrition/food-logs",
+        "body": { "mode": "raw", "raw": "{\n  \"mealType\": \"BREAKFAST\",\n  \"foodName\": \"Oats with milk and banana\",\n  \"calories\": 420,\n  \"proteinG\": 16,\n  \"carbsG\": 70,\n  \"fatG\": 8\n}" }
+      }
+    },
+    { "name": "Daily nutrition (today)", "request": { "method": "GET", "url": "{{baseUrl}}/api/nutrition/daily" } },
+    {
+      "name": "Log body metrics",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/metrics",
+        "body": { "mode": "raw", "raw": "{\n  \"weightKg\": 61.5,\n  \"waistCm\": 72,\n  \"chestCm\": 90\n}" }
+      }
+    },
+    { "name": "Weight trend (90 days)", "request": { "method": "GET", "url": "{{baseUrl}}/api/progress/weight?days=90" } },
+    { "name": "Strength trend (exercise 1)", "request": { "method": "GET", "url": "{{baseUrl}}/api/progress/strength/1" } },
+    { "name": "Weekly volume (12 weeks)", "request": { "method": "GET", "url": "{{baseUrl}}/api/progress/volume?weeks=12" } },
+    { "name": "Generate this week's summary", "request": { "method": "POST", "url": "{{baseUrl}}/api/summaries/weekly/generate" } },
+    { "name": "List weekly summaries", "request": { "method": "GET", "url": "{{baseUrl}}/api/summaries/weekly" } }
+  ]
+}

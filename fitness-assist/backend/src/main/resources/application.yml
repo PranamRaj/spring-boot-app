@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: fitness-assist
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/fitness_assist?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
+  jwt:
+    # must be at least 32 characters; override with JWT_SECRET in any real deployment
+    secret: ${JWT_SECRET:change-this-development-secret-key-at-least-32-chars}
+    expiration-ms: 86400000
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
