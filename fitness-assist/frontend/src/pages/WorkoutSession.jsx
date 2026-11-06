@@ -44,8 +44,8 @@ export default function WorkoutSession() {
     const tl = gsap.timeline();
     tl.from(nodes, { opacity: 0, x: -16, duration: 0.45, ease: EASE, clearProps: 'all' }).fromTo(
       nodes,
-      { backgroundColor: 'rgba(195,245,60,0.14)' },
-      { backgroundColor: 'rgba(195,245,60,0)', duration: 1.1, ease: 'power1.out', clearProps: 'backgroundColor' },
+      { backgroundColor: 'rgba(244,130,79,0.16)' },
+      { backgroundColor: 'rgba(244,130,79,0)', duration: 1.1, ease: 'power1.out', clearProps: 'backgroundColor' },
       0
     );
     return () => tl.kill();

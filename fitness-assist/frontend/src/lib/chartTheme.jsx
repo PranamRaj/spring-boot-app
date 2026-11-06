@@ -4,15 +4,15 @@
  * colours are written down.
  */
 export const CHART = {
-  signal: '#a8e01f',
-  signalLight: '#d6fb6e',
-  cool: '#4cc8ff',
+  signal: '#e2653a',
+  signalLight: '#ffb38c',
+  cool: '#9bb89a',
   grid: 'rgba(255,255,255,0.055)',
-  tick: '#646b7d',
+  tick: '#7c7163',
 };
 
 export const axis = {
-  tick: { fontSize: 11, fill: CHART.tick, fontFamily: '"JetBrains Mono", monospace' },
+  tick: { fontSize: 11, fill: CHART.tick, fontFamily: '"IBM Plex Mono", monospace' },
   stroke: 'rgba(255,255,255,0.1)',
   tickLine: false,
 };
@@ -45,4 +45,4 @@ export function ChartTooltip({ active, payload, label, unit = '' }) {
 
 /** Highlights the hovered bar/point without the grey default wash. */
 export const cursor = { fill: 'rgba(255,255,255,0.04)' };
-export const activeDot = { r: 4, strokeWidth: 2, stroke: '#101217' };
+export const activeDot = { r: 4, strokeWidth: 2, stroke: '#181512' };

@@ -571,7 +571,7 @@ function FieldInput({ field: f, value, error, disabled, isNew, onChange }) {
     case 'BOOLEAN':
       input = (
         <label className={`flex h-[2.625rem] items-center gap-2.5 text-sm ${disabled ? 'opacity-60' : 'cursor-pointer'}`}>
-          <input type="checkbox" className="h-4 w-4 accent-[#c3f53c]" disabled={disabled} checked={!!value} onChange={(e) => onChange(e.target.checked)} />
+          <input type="checkbox" className="h-4 w-4 accent-[#f4824f]" disabled={disabled} checked={!!value} onChange={(e) => onChange(e.target.checked)} />
           {value ? 'Yes' : 'No'}
         </label>
       );

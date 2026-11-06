@@ -20,8 +20,8 @@
     @apply bg-ink-950 font-sans text-ink-100 antialiased;
     /* Two very wide, very dim washes. Fixed, so content scrolls over them. */
     background-image:
-      radial-gradient(110rem 48rem at 18% -14%, rgba(195, 245, 60, 0.055), transparent 60%),
-      radial-gradient(80rem 40rem at 96% 4%, rgba(76, 200, 255, 0.035), transparent 62%);
+      radial-gradient(110rem 48rem at 18% -14%, rgba(244, 130, 79, 0.07), transparent 60%),
+      radial-gradient(80rem 40rem at 96% 4%, rgba(155, 184, 154, 0.045), transparent 62%);
     background-attachment: fixed;
     text-rendering: optimizeLegibility;
   }
@@ -37,6 +37,9 @@
   h3 {
     @apply text-ink-50;
     text-wrap: balance;
+    /* Expanded cut of Archivo for headings: athletic without going novelty. */
+    font-stretch: 118%;
+    font-variation-settings: 'wdth' 118;
   }
 
   ::selection {
@@ -46,7 +49,7 @@
   /* Slim scrollbar that matches the surfaces. */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #22262f transparent;
+    scrollbar-color: #2c2722 transparent;
   }
   ::-webkit-scrollbar {
     width: 10px;
@@ -96,6 +99,17 @@
     @apply transition-[transform,border-color,box-shadow] duration-500 ease-out will-change-transform hover:-translate-y-1 hover:border-white/[0.14];
   }
 
+  /* Auth forms sit on a photo, so the card goes frosted instead of solid. */
+  .auth-glass > .card {
+    @apply border-white/[0.12] bg-ink-900/55 backdrop-blur-2xl;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+      0 40px 80px -30px rgba(0, 0, 0, 0.85);
+  }
+  .auth-glass .input {
+    @apply bg-ink-950/50;
+  }
+
   .card-pad-none {
     @apply p-0;
   }
@@ -131,7 +145,7 @@
 
   select.input {
     @apply cursor-pointer appearance-none bg-no-repeat pr-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23646b7d' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%237c7163' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-position: right 0.9rem center;
   }
   select.input option {

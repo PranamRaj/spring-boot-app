@@ -4,35 +4,37 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Near-black neutrals with a cool cast. 950 is the page, 900 the surface.
+        // Warm charcoal neutrals — think rubber gym floor and chalk, not a
+        // blue-black IDE. 50 is bone-white text, 950 the page.
         ink: {
-          50: '#f4f5f7',
-          100: '#e3e5ea',
-          200: '#c3c7d1',
-          300: '#9298a7',
-          400: '#646b7d',
-          500: '#454b5a',
-          600: '#2f3441',
-          700: '#22262f',
-          800: '#171a21',
-          900: '#101217',
-          950: '#0a0b0f',
+          50: '#f4efe6',
+          100: '#e6dfd2',
+          200: '#c9bfae',
+          300: '#a19584',
+          400: '#7c7163',
+          500: '#5a5146',
+          600: '#3e372f',
+          700: '#2c2722',
+          800: '#201c18',
+          900: '#181512',
+          950: '#110f0d',
         },
-        // Single signal colour: acid lime. Used for the active state and nothing else.
+        // Single signal colour: persimmon / ember. Active state and primary action only.
         signal: {
-          200: '#e8ffb0',
-          300: '#d6fb6e',
-          400: '#c3f53c',
-          500: '#a8e01f',
-          600: '#85b514',
-          700: '#628512',
+          200: '#ffd9c4',
+          300: '#ffb38c',
+          400: '#f4824f',
+          500: '#e2653a',
+          600: '#b94c26',
+          700: '#8c391d',
         },
-        heat: '#ff7a45',
-        cool: '#4cc8ff',
+        heat: '#e8b04b',
+        cool: '#9bb89a',
       },
       fontFamily: {
-        sans: ['"Inter Tight"', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans: ['Archivo', 'system-ui', 'sans-serif'],
+        display: ['Archivo', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
         // Fluid display sizes so headings scale without breakpoint jumps.
@@ -45,7 +47,7 @@ export default {
       },
       boxShadow: {
         lift: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 18px 40px -24px rgba(0,0,0,0.9)',
-        glow: '0 0 0 1px rgba(195,245,60,0.35), 0 10px 40px -12px rgba(195,245,60,0.25)',
+        glow: '0 0 0 1px rgba(244,130,79,0.4), 0 10px 40px -12px rgba(244,130,79,0.35)',
       },
       backgroundImage: {
         grain:

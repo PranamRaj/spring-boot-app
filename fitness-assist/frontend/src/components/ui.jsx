@@ -25,7 +25,7 @@ export function Card({ as: Tag = 'div', tilt = false, reveal = '', className = '
           className="pointer-events-none absolute inset-0 rounded-card opacity-0 transition-opacity duration-500 group-hover/card:opacity-100"
           style={{
             background:
-              'radial-gradient(22rem 22rem at var(--mx, 50%) var(--my, 0%), rgba(195,245,60,0.07), transparent 70%)',
+              'radial-gradient(22rem 22rem at var(--mx, 50%) var(--my, 0%), rgba(244,130,79,0.09), transparent 70%)',
           }}
         />
       )}
@@ -188,8 +188,8 @@ export function Ring({ value, max, size = 132, stroke = 9, children }) {
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={stroke} />
         <defs>
           <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#a8e01f" />
-            <stop offset="100%" stopColor="#d6fb6e" />
+            <stop offset="0%" stopColor="#e2653a" />
+            <stop offset="100%" stopColor="#ffb38c" />
           </linearGradient>
         </defs>
         <circle
