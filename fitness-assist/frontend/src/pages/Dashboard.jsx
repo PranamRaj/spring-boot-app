@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { errMsg } from '../api.js';
 import { useAuth } from '../AuthContext.jsx';
-import { useReveal, useCountUp, useParallax } from '../lib/motion.js';
+import { gsap, reducedMotion, useCountUp, useParallax, EASE } from '../lib/motion.js';
+import DashboardBackdrop from '../components/DashboardBackdrop.jsx';
 import {
   Card,
   Chip,
   Empty,
   ErrorBox,
   MacroMeter,
-  PageHeader,
   Panel,
   Ring,
   Skeleton,
@@ -49,30 +49,92 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Re-scan for reveal targets once the panels have real content in them.
-  const scope = useReveal([loading, sessions.length, !!summary]);
+  const scope = useRef(null);
+  const firstName = user?.name?.split(' ')[0] || 'there';
+
+  // Hero text + cards on mount: headline letters rise out of a mask, then the
+  // cards lift in one after another.
+  useLayoutEffect(() => {
+    const el = scope.current;
+    if (!el || reducedMotion()) return;
+    const ctx = gsap.context(() => {
+      gsap
+        .timeline({ defaults: { ease: EASE } })
+        .from('[data-hero-eyebrow]', { opacity: 0, x: -16, duration: 0.5 }, 0.1)
+        .from('[data-hero-char]', { yPercent: 115, duration: 0.8, stagger: 0.03, ease: 'expo.out' }, 0.15)
+        .from('[data-hero-sub]', { opacity: 0, y: 12, duration: 0.6 }, 0.45)
+        .from('[data-hero-cta]', { opacity: 0, y: 12, scale: 0.96, duration: 0.5, stagger: 0.08 }, 0.5)
+        .from('[data-hero-rule]', { scaleX: 0, transformOrigin: 'left center', duration: 1 }, 0.5)
+        .from(
+          '[data-dash-card]',
+          { opacity: 0, y: 40, scale: 0.96, duration: 0.8, stagger: 0.12, clearProps: 'transform,opacity' },
+          0.55
+        );
+    }, el);
+    return () => ctx.revert();
+  }, []);
+
+  // Workout rows slide in once they arrive.
+  useEffect(() => {
+    if (loading || !sessions.length || !scope.current || reducedMotion()) return;
+    const tween = gsap.from(scope.current.querySelectorAll('[data-session-row]'), {
+      opacity: 0,
+      x: -16,
+      duration: 0.5,
+      stagger: 0.06,
+      ease: EASE,
+      delay: 0.2,
+      clearProps: 'all',
+    });
+    return () => tween.kill();
+  }, [loading, sessions.length]);
 
   const remaining = daily?.remaining.calories ?? 0;
   const over = remaining < 0;
 
   return (
     <div ref={scope} className="space-y-6 sm:space-y-8">
-      <PageHeader title={`Hi, ${user?.name?.split(' ')[0] || 'there'}`} subtitle={today()}>
-        <Link to="/nutrition" className="btn-ghost">
-          <IconFlame size={16} />
-          Log food
-        </Link>
-        <Link to="/workouts" className="btn">
-          <IconPulse size={16} />
-          Start a workout
-        </Link>
-      </PageHeader>
+      <DashboardBackdrop />
+
+      <header className="pt-2 sm:pt-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
+          <div className="min-w-0">
+            <p data-hero-eyebrow className="eyebrow text-signal-300">
+              {today()}
+            </p>
+            <h1
+              aria-label={`Hi, ${firstName}`}
+              className="mt-3 text-[clamp(2.2rem,1.4rem+3vw,3.75rem)] font-extrabold leading-[1] tracking-[-0.03em]"
+            >
+              <SplitChars text="Hi, " />
+              <SplitChars text={firstName} className="text-signal-300" />
+            </h1>
+            <p data-hero-sub className="mt-3 max-w-lg text-sm leading-relaxed text-ink-300 sm:text-[0.95rem]">
+              Here&apos;s where today stands. Log a meal or start a session to keep the week moving.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link data-hero-cta to="/nutrition" className="btn-ghost backdrop-blur-md">
+              <IconFlame size={16} />
+              Log food
+            </Link>
+            <Link data-hero-cta to="/workouts" className="btn">
+              <IconPulse size={16} />
+              Start a workout
+            </Link>
+          </div>
+        </div>
+        <div
+          data-hero-rule
+          className="mt-6 h-px w-full bg-gradient-to-r from-signal-400/60 via-white/[0.1] to-transparent"
+        />
+      </header>
 
       <ErrorBox message={error} />
 
       <div className="grid gap-5 xl:grid-cols-3">
         {/* Calories + macros */}
-        <Card tilt reveal="" className="xl:col-span-2">
+        <Card tilt reveal={false} data-dash-card className="xl:col-span-2">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold tracking-tight">Today&apos;s intake</h2>
             <Link to="/nutrition" className="link inline-flex items-center gap-1 text-sm">
@@ -108,7 +170,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Weekly consistency */}
-        <Card tilt reveal="right">
+        <Card tilt reveal={false} data-dash-card>
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold tracking-tight">Last week</h2>
             <Link to="/progress" className="link inline-flex items-center gap-1 text-sm">
@@ -134,7 +196,8 @@ export default function Dashboard() {
 
       {/* Recent workouts */}
       <Panel
-        reveal=""
+        reveal={false}
+        data-dash-card
         title="Recent workouts"
         action={
           <Link to="/workouts" className="link inline-flex items-center gap-1 text-sm">
@@ -164,7 +227,7 @@ export default function Dashboard() {
         ) : (
           <ul>
             {sessions.map((s) => (
-              <li key={s.id} className="row group/row">
+              <li key={s.id} data-session-row className="row group/row">
                 <Link to={`/workouts/${s.id}`} className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-ink-100 transition-colors group-hover/row:text-signal-300">
                     {s.name}
@@ -187,6 +250,21 @@ export default function Dashboard() {
         )}
       </Panel>
     </div>
+  );
+}
+
+/** Each letter in its own mask so it can rise into place. */
+function SplitChars({ text, className = '' }) {
+  return (
+    <span aria-hidden="true" className={className}>
+      {Array.from(text).map((ch, i) => (
+        <span key={i} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
+          <span data-hero-char className="inline-block">
+            {ch === ' ' ? ' ' : ch}
+          </span>
+        </span>
+      ))}
+    </span>
   );
 }
 

@@ -43,10 +43,10 @@ export default function Login() {
       }
     >
       <Card reveal={false} className="w-full">
-        <form onSubmit={submit} className="space-y-5">
+        <form onSubmit={submit} className="space-y-4">
           <div data-auth-field>
             <h1 className="text-title font-bold">Log in</h1>
-            <p className="mt-1.5 text-sm text-ink-400">Pick up where you left off.</p>
+            <p className="mt-1 text-sm text-ink-400">Pick up where you left off.</p>
           </div>
 
           <ErrorBox message={error} />
@@ -77,7 +77,7 @@ export default function Login() {
             </Field>
           </div>
 
-          <div data-auth-field className="space-y-4 pt-1">
+          <div data-auth-field className="space-y-3 pt-1">
             <button className="btn w-full" disabled={busy}>
               {busy ? 'Logging in…' : 'Log in'}
               {!busy && <IconArrow size={16} />}

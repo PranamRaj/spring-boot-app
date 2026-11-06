@@ -105,7 +105,7 @@ export default function AuthShell({ title, lead, aside, children }) {
         <div className="absolute inset-0 bg-grain opacity-[0.06] mix-blend-overlay" />
       </div>
 
-      <div className="relative mx-auto grid min-h-screen w-full max-w-[82rem] items-center gap-12 px-5 py-10 sm:px-8 lg:grid-cols-[1.05fr_minmax(0,27rem)] lg:gap-16 lg:py-16">
+      <div className="relative mx-auto grid min-h-[100dvh] w-full max-w-[82rem] items-center gap-8 px-5 py-5 sm:px-8 lg:grid-cols-[1.05fr_minmax(0,25rem)] lg:gap-14 lg:py-6">
         {/* Pitch — second in the DOM order on mobile so the form leads. */}
         <div className="order-2 hidden lg:order-1 lg:block">
           <div data-auth-eyebrow className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export default function AuthShell({ title, lead, aside, children }) {
             <span className="eyebrow text-ink-200">Fitness Assist</span>
           </div>
 
-          <h2 className="mt-8 max-w-xl text-[clamp(2.4rem,1.4rem+3vw,4rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.02em]">
+          <h2 className="mt-5 max-w-xl text-[clamp(2rem,1.2rem+2.4vw,3.25rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.02em]">
             {words.map((w, i) => (
               <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-top">
                 <span data-auth-word className="inline-block">
@@ -126,20 +126,20 @@ export default function AuthShell({ title, lead, aside, children }) {
             ))}
           </h2>
 
-          <div data-auth-rule className="mt-7 h-[3px] w-24 rounded-full bg-signal-400" />
+          <div data-auth-rule className="mt-5 h-[3px] w-24 rounded-full bg-signal-400" />
 
-          <p data-auth-lead className="mt-6 max-w-md text-[0.98rem] leading-relaxed text-ink-200/80">
+          <p data-auth-lead className="mt-4 max-w-md text-[0.94rem] leading-relaxed text-ink-200/80">
             {lead}
           </p>
           {aside && (
-            <div data-auth-aside className="mt-12 max-w-lg">
+            <div data-auth-aside className="mt-8 max-w-lg [@media(max-height:700px)]:hidden">
               {aside}
             </div>
           )}
         </div>
 
         <div className="order-1 w-full lg:order-2">
-          <div data-auth-brand className="mb-6 flex items-center gap-2.5 lg:hidden">
+          <div data-auth-brand className="mb-4 flex items-center gap-2.5 lg:hidden">
             <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-signal-400 text-ink-950">
               <IconDumbbell size={17} />
             </span>
@@ -159,11 +159,11 @@ export default function AuthShell({ title, lead, aside, children }) {
 /** Three-up figures under the pitch copy. Static text, not fake stats. */
 export function AuthPoints({ items }) {
   return (
-    <ul className="grid gap-x-8 gap-y-6 border-t border-white/10 pt-6 sm:grid-cols-3">
+    <ul className="grid gap-x-8 gap-y-4 border-t border-white/10 pt-5 sm:grid-cols-3">
       {items.map(([head, body], i) => (
         <li key={head}>
           <div className="font-mono text-[0.7rem] text-signal-300">0{i + 1}</div>
-          <div className="mt-2 text-sm font-semibold text-ink-50">{head}</div>
+          <div className="mt-1.5 text-sm font-semibold text-ink-50">{head}</div>
           <div className="mt-1.5 text-xs leading-relaxed text-ink-300">{body}</div>
         </li>
       ))}

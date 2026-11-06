@@ -149,7 +149,7 @@ export default function WorkoutSession() {
       <ErrorBox message={error} />
 
       {!session.finished && (
-        <Panel reveal="" title="Log a set" className="sticky top-2 z-20 lg:top-4">
+        <Panel reveal="" title="Log a set" className="sticky top-20 z-20">
           <form onSubmit={addSet} className="grid items-end gap-3 sm:grid-cols-[1fr_6rem_7rem_auto]">
             <Field label="Exercise">
               <select

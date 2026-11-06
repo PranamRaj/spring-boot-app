@@ -42,7 +42,7 @@ export default function Exercises() {
       <ErrorBox message={error} />
 
       {/* Filters. Stack on a phone, three across from sm. */}
-      <Card reveal="" className="sticky top-2 z-20 lg:top-4">
+      <Card reveal="" className="sticky top-20 z-20">
         <div className="grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
           <div className="relative">
             <IconSearch size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500" />

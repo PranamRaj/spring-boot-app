@@ -143,7 +143,7 @@ export default function DataManager() {
 
       <div className="grid gap-5 lg:grid-cols-[14.5rem_minmax(0,1fr)]">
         {/* Table list */}
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
           <select
             className="input lg:hidden"
             value={tableKey || ''}

@@ -66,9 +66,9 @@ export function PageHeader({ title, subtitle, children }) {
 }
 
 /** Card with a heading row and an optional action on the right. */
-export function Panel({ title, action, note, className = '', reveal = '', bodyClass = '', children }) {
+export function Panel({ title, action, note, className = '', reveal = '', bodyClass = '', children, ...rest }) {
   return (
-    <Card reveal={reveal} className={className}>
+    <Card reveal={reveal} className={className} {...rest}>
       {(title || action) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <div>
