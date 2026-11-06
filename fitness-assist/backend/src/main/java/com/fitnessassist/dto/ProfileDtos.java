@@ -20,13 +20,13 @@ public class ProfileDtos {
             Long id, String name, String email, Sex sex, Integer age, Double heightCm, Double weightKg,
             ActivityLevel activityLevel, FitnessGoal goal,
             Integer dailyCalorieTarget, Integer proteinTargetG, Integer carbsTargetG, Integer fatTargetG,
-            Integer weeklyWorkoutTarget) {
+            Integer weeklyWorkoutTarget, Role role) {
 
         public static ProfileResponse from(User u) {
             return new ProfileResponse(u.getId(), u.getName(), u.getEmail(), u.getSex(), u.getAge(),
                     u.getHeightCm(), u.getWeightKg(), u.getActivityLevel(), u.getGoal(),
                     u.getDailyCalorieTarget(), u.getProteinTargetG(), u.getCarbsTargetG(), u.getFatTargetG(),
-                    u.getWeeklyWorkoutTarget());
+                    u.getWeeklyWorkoutTarget(), u.getRole());
         }
     }
 }

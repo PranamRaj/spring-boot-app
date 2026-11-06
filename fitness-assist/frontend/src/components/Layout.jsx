@@ -13,6 +13,7 @@ import {
 import {
   IconChart,
   IconClose,
+  IconDatabase,
   IconDumbbell,
   IconFlame,
   IconGauge,
@@ -20,7 +21,9 @@ import {
   IconLogout,
   IconMenu,
   IconPulse,
+  IconShield,
   IconUser,
+  IconUsers,
 } from './icons.jsx';
 
 const links = [
@@ -30,6 +33,13 @@ const links = [
   ['/workouts', 'Workouts', IconPulse],
   ['/nutrition', 'Nutrition', IconFlame],
   ['/progress', 'Progress', IconChart],
+];
+
+const adminLinks = [
+  ['/admin', 'Overview', IconGauge],
+  ['/admin/trainees', 'Trainees', IconUsers],
+  ['/admin/data', 'Database', IconDatabase],
+  ['/exercises', 'Exercises', IconDumbbell],
 ];
 
 function Wordmark({ className = '' }) {
@@ -49,7 +59,7 @@ function NavItem({ to, text, Icon, onClick }) {
   return (
     <NavLink
       to={to}
-      end={to === '/'}
+      end={to === '/' || to === '/admin'}
       onClick={onClick}
       className={({ isActive }) =>
         `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
@@ -81,6 +91,8 @@ function NavRail({ onNavigate, watch }) {
   const listRef = useRef(null);
   const pillRef = useRef(null);
   const { pathname } = useLocation();
+  const { isAdmin } = useAuth();
+  const items = isAdmin ? adminLinks : links;
   const first = useRef(true);
 
   useLayoutEffect(() => {
@@ -124,7 +136,7 @@ function NavRail({ onNavigate, watch }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 rounded-xl bg-signal-400 opacity-0"
       />
-      {links.map(([to, text, Icon]) => (
+      {items.map(([to, text, Icon]) => (
         <NavItem key={to} to={to} text={text} Icon={Icon} onClick={onNavigate} />
       ))}
     </nav>
@@ -132,8 +144,21 @@ function NavRail({ onNavigate, watch }) {
 }
 
 function UserBlock({ user, onLogout }) {
+  const isAdmin = user?.role === 'ADMIN';
   return (
     <div className="space-y-1">
+      {isAdmin ? (
+        // Admins have no fitness profile to edit, so this is a label rather than a link.
+        <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-300">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-signal-400/30 bg-signal-400/10 text-signal-300">
+            <IconShield size={14} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-ink-100">{user?.name || 'Admin'}</span>
+            <span className="block text-[0.6875rem] uppercase tracking-[0.12em] text-ink-500">Admin</span>
+          </span>
+        </div>
+      ) : (
       <NavLink
         to="/profile"
         className={({ isActive }) =>
@@ -147,6 +172,7 @@ function UserBlock({ user, onLogout }) {
         </span>
         <span className="min-w-0 flex-1 truncate font-medium">{user?.name || 'Profile'}</span>
       </NavLink>
+      )}
       <button
         onClick={onLogout}
         className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-400 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink-100"

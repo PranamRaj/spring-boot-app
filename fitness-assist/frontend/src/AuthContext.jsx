@@ -1,4 +1,5 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import api from './api.js';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +11,19 @@ export function AuthProvider({ children }) {
       return null;
     }
   });
+
+  // The cached user can be stale (e.g. saved by an older backend without a role), so
+  // re-read the profile once per page load and keep the role in sync with the server.
+  useEffect(() => {
+    if (!localStorage.getItem('token')) return;
+    api
+      .get('/profile')
+      .then(({ data }) => {
+        localStorage.setItem('user', JSON.stringify(data));
+        setUser(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const signIn = ({ token, user }) => {
     localStorage.setItem('token', token);
@@ -29,7 +43,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, updateUser }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, isAdmin: user?.role === 'ADMIN', signIn, signOut, updateUser }}>{children}</AuthContext.Provider>
   );
 }
 

@@ -32,10 +32,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String email = jwtService.extractEmail(header.substring(7));
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails details = userDetailsService.loadUserByUsername(email);
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    // A suspended account's existing token stops working immediately.
+                    if (details.isEnabled()) {
+                        UsernamePasswordAuthenticationToken auth =
+                                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
+                        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    }
                 }
             } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ignored) {
                 // Invalid token: leave the request unauthenticated; protected routes will answer 401.

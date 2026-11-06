@@ -5,6 +5,7 @@ A full-stack fitness platform that puts workout planning, nutrition tracking and
 - **Workouts**: exercise library (by muscle group and equipment), reusable routines, live set/rep/weight logging with automatic volume per exercise and per session.
 - **Nutrition**: daily food log, macro tracking, and remaining calories in real time. Targets come from the user's profile and goal (fat loss, muscle gain, maintenance).
 - **Progress**: body weight and circumference history, strength trends (best set and estimated 1RM), weekly training volume.
+- **Admin dashboard**: coaches see every trainee's activity and progress, add or delete trainees, suspend accounts, reset passwords, keep private coach notes, and export the list as CSV. See [Admin dashboard](#admin-dashboard).
 - **Background jobs**: a midnight job issues each user a fresh daily calorie allowance; a Monday job builds the weekly consistency summary.
 
 ## Stack
@@ -103,6 +104,8 @@ variables still override it if you prefer that for CI or deployment.
 | `JWT_SECRET` | development value | **change this**; at least 32 characters |
 | `APP_TIMEZONE` | `Asia/Kolkata` | what "today" means for logs and scheduled jobs |
 | `CORS_ORIGINS` | `http://localhost:5173` | comma-separated allowed origins |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@fitnessassist.com` / `Admin@12345` | first admin account, created on startup if none exists; **change the password** outside local development |
+| `ADMIN_NAME` | `Head Coach` | display name of that admin |
 
 Run the unit tests with `mvn test` (they cover the calorie/macro calculator and need no database).
 
@@ -121,6 +124,20 @@ All routes except `/api/auth/**` need `Authorization: Bearer <token>`.
 | Body metrics | `GET /api/metrics?from=&to=`, `POST /api/metrics` (one entry per day, re-posting updates it), `DELETE /api/metrics/{id}` |
 | Progress | `GET /api/progress/weight?days=`, `GET /api/progress/strength/{exerciseId}`, `GET /api/progress/volume?weeks=` |
 | Weekly summaries | `GET /api/summaries/weekly`, `POST /api/summaries/weekly/generate?date=` |
+| Admin (ADMIN role only) | `GET /api/admin/overview`, `GET/POST /api/admin/trainees`, `GET/DELETE /api/admin/trainees/{id}`, `PUT /api/admin/trainees/{id}/status`, `PUT .../password`, `PUT .../notes` |
+| Admin database (ADMIN only) | `GET /api/admin/data` (tables, columns, row counts), `GET /api/admin/data/{table}?page=&size=&q=&sort=&dir=&<column>=<value>`, `GET /api/admin/data/{table}/options?q=`, `GET/PUT/DELETE /api/admin/data/{table}/{id}`, `POST /api/admin/data/{table}` |
+
+## Admin dashboard
+
+Log in with the admin account (see `ADMIN_EMAIL` / `ADMIN_PASSWORD` above) and you land on `/admin` instead of the trainee dashboard.
+
+- **Overview** (`/admin`): trainee count, how many were active in the last 7 days, workouts and volume this week, the share of trainees hitting their weekly workout target, weekly workout and sign-up charts, a goal breakdown, a top-5 leaderboard, and a "needs a check-in" list of trainees with no activity for 7+ days.
+- **Trainees** (`/admin/trainees`): searchable, filterable, sortable table with status, this week's workouts against target, total workouts, weight change, consistency score and last activity. Add a trainee (with a generated temporary password), suspend or reactivate, delete, or export the filtered rows to CSV.
+- **Trainee detail** (`/admin/trainees/{id}`): profile and targets, weight trend chart, last 10 workouts, weekly summaries, private coach notes, and reset-password / suspend / delete actions.
+
+- **Database** (`/admin/data`): full create / read / update / delete for every table — users, exercises, routines, routine exercises, workout sessions, workout sets, food logs, daily targets, body metrics and weekly summaries. Search, filter (click any linked value such as a user to filter by it), sort by any column, page through rows, and open "Related records" from a row to jump to everything that references it. Writes go through the same rules as the app: passwords are hashed, calorie/macro targets are recalculated when a user's profile changes, set volume and session totals are recomputed, and an admin cannot delete, demote or deactivate their own account. Duplicate values and deletes blocked by references come back as a clear message instead of an error page. Table definitions live in `service/data/DataResources.java`; add an entity there to expose it.
+
+Status meanings: **Active** = trained or logged food in the last 7 days; **New** = joined in the last 7 days with nothing logged; **Inactive** = nothing for 7+ days; **Suspended** = blocked by an admin (cannot log in, existing sessions stop working, data is kept). Deleting a trainee removes all of their data permanently. Admin accounts cannot be suspended or deleted from the dashboard.
 
 ## How the calculations work
 

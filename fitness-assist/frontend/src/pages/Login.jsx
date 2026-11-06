@@ -20,7 +20,7 @@ export default function Login() {
     try {
       const { data } = await api.post('/auth/login', form);
       signIn(data);
-      navigate('/');
+      navigate(data.user?.role === 'ADMIN' ? '/admin' : '/');
     } catch (err) {
       setError(errMsg(err));
     } finally {

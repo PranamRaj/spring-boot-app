@@ -10,4 +10,6 @@ public interface WorkoutRoutineRepository extends JpaRepository<WorkoutRoutine, 
     List<WorkoutRoutine> findByUserIdOrderByIdDesc(Long userId);
 
     Optional<WorkoutRoutine> findByIdAndUserId(Long id, Long userId);
+
+    void deleteByUserId(Long userId);
 }

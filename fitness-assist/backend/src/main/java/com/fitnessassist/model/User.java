@@ -57,4 +57,28 @@ public class User {
     private Integer weeklyWorkoutTarget = 4;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Role role = Role.TRAINEE;
+
+    /** Suspended accounts cannot log in; their data is kept. */
+    private Boolean active = true;
+
+    /** Private notes the coach (admin) keeps about this trainee. */
+    @Column(length = 2000)
+    private String coachNotes;
+
+    // Rows created before these columns existed hold nulls until AdminSeeder backfills them.
+    public Role getRole() {
+        return role == null ? Role.TRAINEE : role;
+    }
+
+    public boolean isActive() {
+        return active == null || active;
+    }
+
+    public boolean isAdmin() {
+        return getRole() == Role.ADMIN;
+    }
 }

@@ -143,3 +143,67 @@ export const IconScale = (p) => (
     <path d="M12 10l2-2" />
   </Svg>
 );
+
+export const IconUsers = (p) => (
+  <Svg {...p}>
+    <circle cx="9" cy="8.5" r="3.25" />
+    <path d="M3 19.5c.7-3.2 3.1-5 6-5s5.3 1.8 6 5" />
+    <path d="M15.5 5.6a3.25 3.25 0 0 1 0 5.8M17.5 14.8c1.8.6 3 2.2 3.5 4.7" />
+  </Svg>
+);
+
+export const IconShield = (p) => (
+  <Svg {...p}>
+    <path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.6 7 9 4.1-1.4 7-4.8 7-9V6l-7-2.5Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Svg>
+);
+
+export const IconDownload = (p) => (
+  <Svg {...p}>
+    <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />
+  </Svg>
+);
+
+export const IconPause = (p) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M10 9v6M14 9v6" />
+  </Svg>
+);
+
+export const IconKey = (p) => (
+  <Svg {...p}>
+    <circle cx="8" cy="15" r="3.5" />
+    <path d="m10.5 12.5 8-8M16 7l2.5 2.5M14 9l2 2" />
+  </Svg>
+);
+
+export const IconTrophy = (p) => (
+  <Svg {...p}>
+    <path d="M8 4.5h8v5a4 4 0 0 1-8 0v-5Z" />
+    <path d="M8 6.5H5a3 3 0 0 0 3 4M16 6.5h3a3 3 0 0 1-3 4M12 13.5V17M8.5 20h7M10 17h4" />
+  </Svg>
+);
+
+export const IconDatabase = (p) => (
+  <Svg {...p}>
+    <ellipse cx="12" cy="6" rx="7" ry="2.75" />
+    <path d="M5 6v6c0 1.5 3.1 2.75 7 2.75S19 13.5 19 12V6" />
+    <path d="M5 12v6c0 1.5 3.1 2.75 7 2.75S19 19.5 19 18v-6" />
+  </Svg>
+);
+
+export const IconEdit = (p) => (
+  <Svg {...p}>
+    <path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10v3Z" />
+    <path d="m14 8 2.5 2.5" />
+  </Svg>
+);
+
+export const IconRefresh = (p) => (
+  <Svg {...p}>
+    <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+    <path d="M19.5 4.5v4h-4" />
+  </Svg>
+);

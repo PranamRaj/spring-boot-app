@@ -33,6 +33,13 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest r) {
+        User u = createTrainee(r);
+        return new AuthResponse(jwtService.generateToken(u.getEmail()), ProfileResponse.from(u));
+    }
+
+    /** Creates a trainee account with targets and a first weigh-in. Shared by sign-up and the admin dashboard. */
+    @Transactional
+    public User createTrainee(RegisterRequest r) {
         String email = r.email().trim().toLowerCase();
         if (users.existsByEmail(email)) {
             throw new ConflictException("An account with this email already exists");
@@ -56,8 +63,7 @@ public class AuthService {
         first.setDate(clock.today());
         first.setWeightKg(u.getWeightKg());
         metrics.save(first);
-
-        return new AuthResponse(jwtService.generateToken(email), ProfileResponse.from(u));
+        return u;
     }
 
     public AuthResponse login(LoginRequest r) {

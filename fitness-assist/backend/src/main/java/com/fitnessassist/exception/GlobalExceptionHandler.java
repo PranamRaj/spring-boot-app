@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -41,6 +42,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> badCredentials(BadCredentialsException e) {
         return build(HttpStatus.UNAUTHORIZED, "Invalid email or password", null);
+    }
+
+    @ExceptionHandler(FieldValidationException.class)
+    public ResponseEntity<ApiError> fieldValidation(FieldValidationException e) {
+        return build(HttpStatus.BAD_REQUEST, e.getMessage(), e.getFieldErrors());
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiError> disabled(DisabledException e) {
+        return build(HttpStatus.FORBIDDEN, "This account has been suspended. Please contact your coach.", null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
