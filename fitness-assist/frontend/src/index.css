@@ -12,13 +12,13 @@
     @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
   }
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-signal-500 focus:outline-none focus:ring-1 focus:ring-signal-500;
   }
   .label {
     @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500;
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg bg-signal-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-signal-700 disabled:opacity-50;
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100;
